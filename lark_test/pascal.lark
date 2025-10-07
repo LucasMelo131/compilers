@@ -1,0 +1,158 @@
+// pascal.lark
+start: programa
+
+programa: PROGRAM ID PV corpo
+
+corpo: declaracoes BEGIN lista_com END
+
+// Declarations
+
+declaracoes: secoes
+
+secoes: sec_const? sec_tipos? sec_var? lista_func
+
+sec_const: CONST lista_const
+
+sec_tipos: TYPE lista_tipos
+
+sec_var: VAR lista_var
+
+lista_func: (funcao)*
+
+// declaracoes: def_const def_tipos sec_var lista_func
+
+// def_const: CONST lista_const |
+
+lista_const: constante lista_const_tail
+
+lista_const_tail: lista_const |
+
+constante: ID ATRIB const_valor PV
+
+const_valor: STRING | exp_mat
+
+
+// def_tipos: TYPE lista_tipos |
+
+lista_tipos: tipo lista_tipos_tail
+
+lista_tipos_tail: PV lista_tipos |
+
+tipo: ID ATRIB tipo_dado
+
+tipo_dado: INTEGER
+         | REAL
+         | ARRAY ABRE_COL NUMERO FECHA_COL OF tipo_dado
+         | RECORD lista_var END
+         | ID
+
+// def_var: VAR lista_var |
+
+lista_var: variavel lista_var_tail
+
+lista_var_tail: PV lista_var |   
+
+variavel: lista_id DP tipo_dado
+
+lista_id: ID lista_id_tail
+
+lista_id_tail: VIRG lista_id |   
+
+// Functions
+// lista_func: funcao lista_func | 
+
+funcao: nome_funcao bloco_funcao
+
+nome_funcao: FUNCTION ID ABRE_PAR lista_var FECHA_PAR DP tipo_dado
+
+bloco_funcao: sec_var bloco | bloco
+
+bloco: BEGIN lista_com END | comando
+
+
+// Parameters and names used in function params (assuming simple IDs or typed params)
+lista_nome: parametro lista_nome_tail |
+lista_nome_tail: VIRG lista_nome |   
+
+// PARAMETRO in your docs is not fully specified;
+// here we accept "ID DP tipo_dado" or just "ID"
+parametro: nome 
+       | NUMERO
+
+// Statements
+lista_com: comando PV lista_com | 
+
+comando: nome ATRIB valor
+       | WHILE exp_logica bloco
+       | IF exp_logica THEN bloco else 
+       | WRITE const_valor
+       | READ nome 
+
+else: ELSE bloco | 
+
+valor: exp_mat | ID lista_param
+
+lista_param: ABRE_PAR lista_nome FECHA_PAR
+
+nome: ID nome_tail 
+
+nome_tail: PF nome | ABRE_COL parametro FECHA_COL | 
+
+// Expressions
+exp_logica: exp_mat exp_logica_tail
+exp_logica_tail: op_logico exp_logica |   
+
+exp_mat: parametro exp_mat_tail
+exp_mat_tail: OP_MAT exp_mat |   
+
+// Operators (broader than the PDF table; harmonize with your needs)
+op_logico:  "=" | "<" | ">" | "!"
+
+// Terminals
+PROGRAM: "program"
+BEGIN: "begin"
+END: "end"
+CONST: "const"
+TYPE: "type"
+INTEGER: "integer"
+REAL: "real"
+ARRAY: "array"
+OF: "of"
+RECORD: "record"
+VAR: "var"
+FUNCTION: "function"
+WHILE: "while"
+IF: "if"
+THEN: "then"
+WRITE: "write"
+READ: "read"
+ELSE: "else"
+
+PF: "."
+PV: ";"
+ABRE_COL: "["
+FECHA_COL: "]"
+DP: ":"
+VIRG: ","
+ABRE_PAR: "("
+FECHA_PAR: ")"
+ATRIB: ":="
+OP_MAT: /[+\-*\/]/
+
+// Numbers and strings
+NUMERO: /\d+(\.\d+)?/
+STRING: /"[^"\n]*"/
+
+ID: /[A-Za-z][A-Za-z0-9_]*/
+
+// Skip spaces and comments
+%import common.WS_INLINE
+%ignore WS_INLINE
+COMMENT1: /\/\/[^\n]*/
+COMMENT2: /\{[^}]*\}/
+%ignore COMMENT1
+%ignore COMMENT2
+
+// To allow newlines freely
+NEWLINE: /\n+/
+%ignore NEWLINE
