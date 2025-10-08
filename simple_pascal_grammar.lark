@@ -1,0 +1,133 @@
+ // Gramática Pascal Simplificado em formato Lark
+
+// Regra inicial
+//start: programa
+
+// Programa
+programa: "program" ID ";" corpo
+
+// Corpo
+corpo: declaracoes "begin" lista_com "end"
+     | "begin" lista_com "end"
+
+// Declarações
+declaracoes: def_const def_tipos def_var lista_func
+
+// Definição de Constantes
+def_const: "const" lista_const
+         | 
+
+lista_const: constante lista_const_tail
+lista_const_tail: lista_const 
+                |
+
+constante: ID ":=" const_valor ";"
+
+const_valor: "\"" STRING_CONTENT "\""
+           | exp_mat
+
+// Definição de Tipos
+def_tipos: "type" lista_tipos
+         | 
+
+lista_tipos: tipo lista_tipos_tail
+lista_tipos_tail : ";" lista_tipos
+                 |
+
+tipo: ID ":=" tipo_dado
+
+tipo_dado: "integer"
+         | "real"
+         | "array" "[" NUMERO "]" "of" tipo_dado
+         | "record" lista_var "end"
+         | ID
+
+// Definição de Variáveis
+def_var: "var" lista_var
+       | 
+
+lista_var: variavel lista_var_tail
+lista_var_tail : ";" lista_var 
+               |
+
+variavel: lista_id ":" tipo_dado
+
+lista_id: ID lista_id_tail
+lista_id_tail: "," lista_id
+             |
+
+// Funções
+lista_func: funcao lista_func
+          | 
+
+funcao: nome_funcao bloco_funcao
+
+nome_funcao: "function" ID "(" lista_var ")" ":" tipo_dado
+
+bloco_funcao: def_var bloco
+            | bloco
+
+bloco: "begin" lista_com "end"
+     | comando
+
+// Comandos
+lista_com: comando ";" lista_com
+         | 
+
+comando: nome ":=" valor
+       | "while" exp_logica bloco
+       | "if" exp_logica "then" bloco else_bloco
+       | "write" const_valor
+       | "read" nome
+
+//conflito "dangling else"
+else_bloco: "else" bloco
+          | 
+
+// Valores
+valor: exp_mat
+     | ID lista_param
+
+lista_param: "(" lista_nome ")"
+
+lista_nome: parametro lista_nome_tail
+          |
+
+lista_nome_tail: "," lista_nome
+               |
+
+// Expressões Lógicas
+exp_logica: exp_mat exp_logica_tail
+exp_logica_tail: op_logico exp_logica 
+               |
+
+// Expressões Matemáticas
+exp_mat: parametro exp_mat_tail
+exp_mat_tail: op_mat exp_mat 
+            |
+
+parametro: nome
+         | NUMERO
+
+// Operadores
+op_logico: ">" | "<" | "=" | "!"
+
+op_mat: "+" | "-" | "*" | "/"
+
+// Nome (acesso a variáveis, arrays, records)
+nome: ID nome_tail
+nome_tail: "." nome
+         | "[" parametro "]"
+         |
+// Tokens Léxicos
+ID: /[a-zA-Z][a-zA-Z0-9_]*/
+NUMERO: /[0-9]+(\.[0-9]+)?/
+STRING_CONTENT: /[a-zA-Z0-9]+/
+
+// Ignorar espaços em branco e comentários
+%import common.WS
+%ignore WS
+
+// Comentários (opcional)
+COMMENT: /\/\/[^\n]*/
+%ignore COMMENT
