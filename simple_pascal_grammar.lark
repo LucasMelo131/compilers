@@ -1,59 +1,54 @@
- // Gramática Pascal Simplificado em formato Lark
-
-// Regra inicial
-//start: programa
-
 // Programa
-programa: "program" ID ";" corpo
+programa: PROGRAM ID PV corpo
 
 // Corpo
-corpo: declaracoes "begin" lista_com "end"
-     | "begin" lista_com "end"
+corpo: declaracoes BEGIN lista_com END
+     | BEGIN lista_com END
 
 // Declarações
 declaracoes: def_const def_tipos def_var lista_func
 
 // Definição de Constantes
-def_const: "const" lista_const
+def_const: CONST lista_const
          | 
 
 lista_const: constante lista_const_tail
 lista_const_tail: lista_const 
                 |
 
-constante: ID ":=" const_valor ";"
+constante: ID ATRIB const_valor PV
 
-const_valor: "\"" STRING_CONTENT "\""
+const_valor: STRING_CONTENT
            | exp_mat
 
 // Definição de Tipos
-def_tipos: "type" lista_tipos
+def_tipos: TYPE lista_tipos
          | 
 
 lista_tipos: tipo lista_tipos_tail
-lista_tipos_tail : ";" lista_tipos
+lista_tipos_tail : PV lista_tipos
                  |
 
-tipo: ID ":=" tipo_dado
+tipo: ID ATRIB tipo_dado
 
-tipo_dado: "integer"
-         | "real"
-         | "array" "[" NUMERO "]" "of" tipo_dado
-         | "record" lista_var "end"
+tipo_dado: INTEGER
+         | REAL
+         | ARRAY ABRE_COL NUMERO FECHA_COL OF tipo_dado
+         | RECORD lista_var END
          | ID
 
 // Definição de Variáveis
-def_var: "var" lista_var
+def_var: VAR lista_var
        | 
 
 lista_var: variavel lista_var_tail
-lista_var_tail : ";" lista_var 
+lista_var_tail : PV lista_var 
                |
 
-variavel: lista_id ":" tipo_dado
+variavel: lista_id DP tipo_dado
 
 lista_id: ID lista_id_tail
-lista_id_tail: "," lista_id
+lista_id_tail: VIRG lista_id
              |
 
 // Funções
@@ -62,38 +57,37 @@ lista_func: funcao lista_func
 
 funcao: nome_funcao bloco_funcao
 
-nome_funcao: "function" ID "(" lista_var ")" ":" tipo_dado
+nome_funcao: FUNCTION ID ABRE_PAR lista_var FECHA_PAR DP tipo_dado
 
 bloco_funcao: def_var bloco
             | bloco
 
-bloco: "begin" lista_com "end"
+bloco: BEGIN lista_com END
      | comando
 
 // Comandos
-lista_com: comando ";" lista_com
+lista_com: comando PV lista_com
          | 
 
-comando: nome ":=" valor
-       | "while" exp_logica bloco
-       | "if" exp_logica "then" bloco else_bloco
-       | "write" const_valor
-       | "read" nome
+comando: nome ATRIB valor
+       | WHILE exp_logica bloco
+       | IF exp_logica THEN bloco else_bloco
+       | WRITE const_valor
+       | READ nome
 
-//conflito "dangling else"
-else_bloco: "else" bloco
+else_bloco: ELSE bloco
           | 
 
 // Valores
 valor: exp_mat
      | ID lista_param
 
-lista_param: "(" lista_nome ")"
+lista_param: ABRE_PAR lista_nome FECHA_PAR
 
 lista_nome: parametro lista_nome_tail
           |
 
-lista_nome_tail: "," lista_nome
+lista_nome_tail: VIRG lista_nome
                |
 
 // Expressões Lógicas
@@ -110,24 +104,62 @@ parametro: nome
          | NUMERO
 
 // Operadores
-op_logico: ">" | "<" | "=" | "!"
+op_logico: OP_LOG
 
-op_mat: "+" | "-" | "*" | "/"
+op_mat: OP_MAT
 
 // Nome (acesso a variáveis, arrays, records)
 nome: ID nome_tail
-nome_tail: "." nome
-         | "[" parametro "]"
+nome_tail: PT nome
+         | ABRE_COL parametro FECHA_COL
          |
+
 // Tokens Léxicos
+PROGRAM : "program"
+BEGIN : "begin"
+END : "end"
+CONST : "const"
+TYPE : "type"
+INTEGER : "integer"
+REAL : "real"
+ARRAY : "array"
+OF : "of"
+RECORD : "record"
+VAR : "var"
+FUNCTION : "function"
+WHILE : "while"
+IF : "if"
+THEN : "then"
+WRITE : "write"
+READ : "read"
+ELSE : "else"
+
+OP_LOG : ">" | "<" | "=" | "!"
+OP_MAT : "+" | "-" | "*" | "/"
+
+PV : ";"
+ATRIB : ":="
+ABRE_COL : "["
+FECHA_COL : "]"
+DP : ":"
+VIRG : ","
+ABRE_PAR : "("
+FECHA_PAR : ")"
+PT : "."
+
 ID: /[a-zA-Z][a-zA-Z0-9_]*/
 NUMERO: /[0-9]+(\.[0-9]+)?/
-STRING_CONTENT: /[a-zA-Z0-9]+/
+STRING_CONTENT: "\""/[a-zA-Z0-9]+/"\""
 
 // Ignorar espaços em branco e comentários
 %import common.WS
 %ignore WS
 
-// Comentários (opcional)
-COMMENT: /\/\/[^\n]*/
-%ignore COMMENT
+// Comentário de linha
+COMMENT_LINE: /#[^\n]*/
+
+//Comentário de bloco (pode conter quebras de linha, mas não é aninhável)
+COMMENT_BLOCK: "{" ( /[^}\n]/ | /\n/ )* "}"
+
+%ignore COMMENT_LINE
+%ignore COMMENT_BLOCK

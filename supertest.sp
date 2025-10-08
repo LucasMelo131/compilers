@@ -3,10 +3,8 @@ const TAM := 10;
 type
 vetor := array[15] of integer;
 aluno := record
-
 nota1, nota2 : real;
-end
-
+end;
 var
 A, B, C, D : integer;
 E : vetor;
@@ -35,11 +33,28 @@ begin
 result := a * a;
 i := i + 1;
 end;
-
 end
 function lerDados() : aluno
 begin
 write “digite as notas do aluno”;
 read result.nota1;
 read result.nota2;
+end
+function maior(a : vetor) : integer
+var i : integer;
+begin
+i := 0;
+result := a[0];
+while i < 15
+begin
+if a[i] > result then
+result := a[i];
+end;
+end
+begin
+A:=TAM;
+B := fatorial(A);
+C := exp(A,B);
+D := maior(E);
+F := lerDados();
 end

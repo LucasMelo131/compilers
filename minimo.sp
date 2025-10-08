@@ -1,3 +1,0 @@
-program teste;
-begin
-end
