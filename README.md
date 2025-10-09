@@ -5,4 +5,6 @@
 
 ### Instruções:
 - Para instalar as bibliotecas utilizadas no projeto e conseguir rodar o código execute o seguinte comando no terminal:
+
+
   `pip install -r requirements.txt`
